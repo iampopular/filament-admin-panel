@@ -13,6 +13,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 
@@ -69,18 +70,25 @@ class CityResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('state.name')
+                TextColumn::make('country.name')
+                        ->state(function (City $record) {
+                            return $record->state->country->name;
+                        })
+                    ->label('Country')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('state.name')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('name')
                     ->label('City')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

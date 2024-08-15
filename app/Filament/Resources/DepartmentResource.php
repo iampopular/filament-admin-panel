@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class DepartmentResource extends Resource
@@ -36,6 +37,7 @@ class DepartmentResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
+                TextColumn::make('employees_count')->counts('employees'),    
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -16,7 +16,9 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 
 class EmployeeResource extends Resource
 {
@@ -134,50 +136,60 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('fist_name')
+                TextColumn::make('fist_name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('middle_name')
+                TextColumn::make('middle_name')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('last_name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('last_name')
+                TextColumn::make('address')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('zip_code')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('zip_code')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('country.name')
+                TextColumn::make('country.name')
+                        ->state(function (Employee $record) {
+                            return $record->city->state->country->name;
+                        })
                     ->label('Country')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('state.name')
+                TextColumn::make('state_name')
+                    ->state(function (Employee $record) {
+                        return $record->city->state->name;
+                    })
                     ->label('State')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('city.name')
+                TextColumn::make('city.name')
                     ->label('City')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('department.name')
+                TextColumn::make('department.name')
                     ->label('Department')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('date_of_birth')
+                TextColumn::make('date_of_birth')
                     ->date()
                     ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('date_of_hired')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('date_of_hired')
                     ->date()
                     ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
