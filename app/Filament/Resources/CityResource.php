@@ -3,23 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CityResource\Pages;
-use App\Filament\Resources\CityResource\RelationManagers;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\State;
-use Filament\Forms;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Collection;
-use PhpParser\Node\Stmt\Label;
+
 
 class CityResource extends Resource
 {
@@ -38,6 +33,7 @@ class CityResource extends Resource
                 Select::make('country_id')
                     ->live()
                     ->label('Country')
+                    ->dehydrated(false)
                     ->native(true)
                     ->searchable(true)
                     ->preload(true)
@@ -53,25 +49,17 @@ class CityResource extends Resource
                     ->native(false)
                     ->searchable(true)
                     ->preload(true)
-                    ->placeholder(fn (Forms\Get $get): string => empty($get('country_id')) ? 'First select country' : 'Select an option')
                     ->options(
                         function (?City $city, Get $get, Set $set){
-                            if(!empty($city->id) && empty($get('country_id')) ){
-                                $set('country_id', $city->state->country_id);
-                                $set('state_id', $city->state_id);
+                            if(! empty($city) && empty($get('country_id'))){
+                                if($get('state_id')){
+                                    $set('country_id', $city->state->country_id);
+                                }
                             }
-
                             return State::where('country_id', $get('country_id'))->pluck('name', 'id');
                         }
                     ),
-                    
-                /*Select::make('state_id')
-                    ->relationship(name:'State', titleAttribute:'name')
-                    ->native(false)
-                    ->searchable(true)
-                    ->preload(true)
-                    ->required(),*/
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
             ]);

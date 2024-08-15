@@ -3,23 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
-use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Employee;
 use App\Models\State;
-use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Collection;
 
 class EmployeeResource extends Resource
 {
@@ -38,13 +35,13 @@ class EmployeeResource extends Resource
                 Section::make('Employee Name')
                 ->description('')
                 ->schema([
-                    Forms\Components\TextInput::make('fist_name')
+                    TextInput::make('fist_name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('middle_name')
+                    TextInput::make('middle_name')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('last_name')
+                    TextInput::make('last_name')
                         ->required()
                         ->maxLength(255),
                 ])
@@ -58,10 +55,10 @@ class EmployeeResource extends Resource
                         ->searchable(true)
                         ->preload(true)
                         ->required(),
-                    Forms\Components\TextInput::make('address')
+                    TextInput::make('address')
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('zip_code')
+                    TextInput::make('zip_code')
                         ->required()
                         ->maxLength(255),
                     Select::make('country_id')
@@ -80,12 +77,8 @@ class EmployeeResource extends Resource
                     Select::make('state_id')
                         ->label('State')
                         ->options(
-                            function (?Employee $employee, Get $get, Set $set){
-                                $country = Country::find($get('country_id'));
-                                if(!$country){
-                                    return [];
-                                }
-                                return $country->states->pluck('name','id');
+                            function (Get $get){
+                                return State::where('country_id', $get('country_id'))->pluck('name', 'id');
                             }
                         )
                         ->live()
@@ -103,16 +96,15 @@ class EmployeeResource extends Resource
                         ->label('City')
                         ->options(
                             function (?Employee $employee, Get $get, Set $set){
-                                if(!empty($employee->id) && (empty($get('state_id')) && empty($get('country_id'))) ){
-                                    $set('country_id', $employee->city->state->country->id);
-                                    $set('state_id', $employee->city->state->id);
+                                if(!empty($employee->id)){
+                                    if($get('city_id')){
+                                        $set('state_id', $employee->city->state->id);
+                                    }
+                                    if($get('state_id')){
+                                        $set('country_id', $employee->city->state->country->id);
+                                    }
                                 }
-                                $state = State::find($get('state_id'));
-                                if(!$state){
-                                    return [];
-                                }
-                                return $state->cities->pluck('name','id');
-                                
+                                return City::where('state_id', $get('state_id'))->pluck('name', 'id');   
                             }
                         )
                         ->live(debounce: '2s')
@@ -125,11 +117,11 @@ class EmployeeResource extends Resource
                 Section::make('User Dates')
                 ->description('')
                 ->schema([
-                    Forms\Components\DatePicker::make('date_of_birth')
+                    DatePicker::make('date_of_birth')
                         ->required()
                         ->native(false)
                         ->displayFormat('d/m/y'),
-                    Forms\Components\DatePicker::make('date_of_hired')
+                    DatePicker::make('date_of_hired')
                         ->required()
                         ->native(false)
                         ->displayFormat('d/m/y'),
