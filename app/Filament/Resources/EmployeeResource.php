@@ -14,6 +14,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Infolists\Components\Section as ComponentsSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -37,7 +40,7 @@ class EmployeeResource extends Resource
                 Section::make('Employee Name')
                 ->description('')
                 ->schema([
-                    TextInput::make('fist_name')
+                    TextInput::make('first_name')
                         ->required()
                         ->maxLength(255),
                     TextInput::make('middle_name')
@@ -136,7 +139,7 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('fist_name')
+                TextColumn::make('first_name')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('middle_name')
@@ -205,6 +208,33 @@ class EmployeeResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                ComponentsSection::make('Employee Info')
+                ->schema([
+                    TextEntry::make('first_name')->label('First Name'),
+                    TextEntry::make('middle_name')->label('Middle Name'),
+                    TextEntry::make('last_name')->label('Last Name'),
+                ])->columns(2),
+                ComponentsSection::make('Address Info')
+                ->schema([
+                    TextEntry::make('department.name')->label('Department'),
+                    TextEntry::make('address')->label('Address'),
+                    TextEntry::make('zip_code')->label('Zipcode'),
+                    TextEntry::make('city.name')->label('City'),
+                    TextEntry::make('city.state.name')->label('State'),
+                    TextEntry::make('city.state.country.name')->label('Country'),
+                ])->columns(2),
+                ComponentsSection::make('Address Info')
+                ->schema([
+                    TextEntry::make('date_of_birth')->label('Date Of Birth'),
+                    TextEntry::make('date_of_hired')->label('Date Of Hired')
+                ])->columns(2)
             ]);
     }
 

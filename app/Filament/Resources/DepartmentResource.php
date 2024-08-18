@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DepartmentResource extends Resource
 {
@@ -73,7 +74,11 @@ class DepartmentResource extends Resource
             ->schema([
                 Section::make('Department Info')
                 ->schema([
-                    TextEntry::make('name')->label('Department name')
+                    TextEntry::make('name')->label('Department name'),
+                    TextEntry::make('employees_count')
+                            ->state(function (Model $record): int {
+                                return $record->employees()->count();
+                            }),
                 ])->columns(2)
             ]);
     }
