@@ -5,8 +5,12 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\StateResource\Pages;
 use App\Models\State;
 use Filament\Forms;
+use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,15 +29,18 @@ class StateResource extends Resource
     {
         return $form
             ->schema([
-                Select::make('country_id')
-                    ->relationship(name:'Country', titleAttribute:'name')
-                    ->native(false)
-                    ->searchable(true)
-                    ->preload(true)
-                    ->required(),
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                ComponentsSection::make('State Info')
+                ->schema([
+                    Select::make('country_id')
+                        ->relationship(name:'Country', titleAttribute:'name')
+                        ->native(false)
+                        ->searchable(true)
+                        ->preload(true)
+                        ->required(),
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                ])->columns(2)
             ]);
     }
 
@@ -68,6 +75,18 @@ class StateResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Section::make('State Info')
+                ->schema([
+                    TextEntry::make('country.name')->label('Country Name'),
+                    TextEntry::make('name')->label('State name'),
+                ])->columns(2)
             ]);
     }
 

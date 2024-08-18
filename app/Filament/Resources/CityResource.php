@@ -6,11 +6,15 @@ use App\Filament\Resources\CityResource\Pages;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\State;
+use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -31,38 +35,41 @@ class CityResource extends Resource
     {
         return $form
             ->schema([
-                Select::make('country_id')
-                    ->live()
-                    ->label('Country')
-                    ->dehydrated(false)
-                    ->native(true)
-                    ->searchable(true)
-                    ->preload(true)
-                    ->options(
-                        Country::all()->pluck('name','id')
-                    )
-                    ->afterStateUpdated(function (Set $set) {
-                        $set('state_id',null);
-                    }),
-                Select::make('state_id')
-                    ->required()
-                    ->label('State')
-                    ->native(false)
-                    ->searchable(true)
-                    ->preload(true)
-                    ->options(
-                        function (?City $city, Get $get, Set $set){
-                            if(! empty($city) && empty($get('country_id'))){
-                                if($get('state_id')){
-                                    $set('country_id', $city->state->country_id);
+                ComponentsSection::make('City Info')
+                ->schema([
+                    Select::make('country_id')
+                        ->live()
+                        ->label('Country')
+                        ->dehydrated(false)
+                        ->native(true)
+                        ->searchable(true)
+                        ->preload(true)
+                        ->options(
+                            Country::all()->pluck('name','id')
+                        )
+                        ->afterStateUpdated(function (Set $set) {
+                            $set('state_id',null);
+                        }),
+                    Select::make('state_id')
+                        ->required()
+                        ->label('State')
+                        ->native(false)
+                        ->searchable(true)
+                        ->preload(true)
+                        ->options(
+                            function (?City $city, Get $get, Set $set){
+                                if(! empty($city) && empty($get('country_id'))){
+                                    if($get('state_id')){
+                                        $set('country_id', $city->state->country_id);
+                                    }
                                 }
+                                return State::where('country_id', $get('country_id'))->pluck('name', 'id');
                             }
-                            return State::where('country_id', $get('country_id'))->pluck('name', 'id');
-                        }
-                    ),
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                        ),
+                    TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                ])->columns(2)
             ]);
     }
 
@@ -70,10 +77,7 @@ class CityResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('country.name')
-                        ->state(function (City $record) {
-                            return $record->state->country->name;
-                        })
+                TextColumn::make('state.country.name')
                     ->label('Country')
                     ->sortable()
                     ->searchable(),
@@ -104,6 +108,19 @@ class CityResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Section::make('City Info')
+                ->schema([
+                    TextEntry::make('state.country.name')->label('Cotunry Name'),
+                    TextEntry::make('state.name')->label('State Name'),
+                    TextEntry::make('name')->label('City name'),
+                ])->columns(2)
             ]);
     }
 
