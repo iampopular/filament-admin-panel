@@ -20,8 +20,10 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeResource extends Resource
 {
@@ -112,7 +114,6 @@ class EmployeeResource extends Resource
                                 return City::where('state_id', $get('state_id'))->pluck('name', 'id');   
                             }
                         )
-                        ->live(debounce: '2s')
                         ->native(false)
                         ->searchable(true)
                         ->preload(true)
@@ -156,17 +157,11 @@ class EmployeeResource extends Resource
                 TextColumn::make('zip_code')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('country.name')
-                        ->state(function (Employee $record) {
-                            return $record->city->state->country->name;
-                        })
+                TextColumn::make('city.state.country.name')
                     ->label('Country')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('state_name')
-                    ->state(function (Employee $record) {
-                        return $record->city->state->name;
-                    })
+                TextColumn::make('city.state.name')
                     ->label('State')
                     ->sortable()
                     ->searchable(),
@@ -198,7 +193,99 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('Department')->relationship('department','name'),
+                /*SelectFilter::make('Country')
+                    ->relationship('city.state.country','name')
+                    ->native(false)
+                    ->searchable(true)
+                    ->preload(true),
+                SelectFilter::make('State')
+                    ->relationship('city.state','name')
+                    ->native(false)
+                    ->searchable(true)
+                    ->preload(true),
+                SelectFilter::make('City')
+                    ->relationship('city','name')
+                    ->native(false)
+                    ->searchable(true)
+                    ->preload(true),*/
+                Filter::make('Country')
+                    ->form([
+                        Select::make('country_id')
+                            ->label('Country')
+                            ->options(Country::all()->pluck('name','id')->toArray())
+                            ->live()
+                            ->dehydrated(false)
+                            ->native(false)
+                            ->searchable(true)
+                            ->preload(true)
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('city_id',null);
+                                $set('state_id',null);
+                            }),
+                        Select::make('state_id')
+                            ->label('State')
+                            ->options(
+                                function (Get $get){
+                                    return State::where('country_id', $get('country_id'))->pluck('name', 'id');
+                                }
+                            )
+                            ->live()
+                            ->dehydrated(false)
+                            ->native(false)
+                            ->searchable(true)
+                            ->preload(true)
+                            ->afterStateUpdated(
+                                function (Set $set) {
+                                    $set('city_id',null);
+                                }
+                            ),
+                        Select::make('city_id')
+                            ->label('City')
+                            ->options(
+                                function (Get $get){
+                                    return City::where('state_id', $get('state_id'))->pluck('name', 'id');   
+                                }
+                            )
+                            ->native(false)
+                            ->searchable(true)
+                            ->preload(true)
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['city_id'],
+                                fn (Builder $query, $city_id): Builder => $query->whereHas('city',fn($query) => $query->where('id',$city_id)),
+                            )
+                            ->when(
+                                $data['state_id'],
+                                fn (Builder $query, $state_id): Builder => $query->whereHas('city.state',fn($query) => $query->where('id',$state_id)),
+                            )
+                            ->when(
+                                $data['country_id'],
+                                fn (Builder $query, $country_id): Builder => $query->whereHas('city.state.country',fn($query) => $query->where('id',$country_id)),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): ?array {
+                        $indicators = [];
+                        if ($data['city_id'] || $data['state_id'] || $data['country_id']) {
+                            if($data['country_id']){
+                                $indicators[] =  'Country: ' . Country::where('id', $data['country_id'])->value('name');
+                            }
+
+                            if($data['state_id']){
+                                $indicators[] =  'State: ' . State::where('id', $data['state_id'])->value('name');
+                            }
+
+                            if($data['city_id']){
+                                $indicators[] =  'City: ' . City::where('id', $data['city_id'])->value('name');
+                            } 
+                        }
+                        return $indicators;
+                 
+                        
+                    })
+                    
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
